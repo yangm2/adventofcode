@@ -29,10 +29,35 @@ fn main() {
     let f = File::open(input_file_name);
     let b = BufReader::new(f.unwrap()).lines();
 
+    let mut v: Vec<i32> = Vec::new();
     for line in b {
         if let Ok(l) = line {
-            println!("{}", l);
+            let num:i32 = l.parse::<i32>().unwrap();
+            v.push(num);
+            println!("{}", num);
         }
+    }
+
+    v.sort();
+
+    for (idx, n) in v.iter().enumerate() {
+        // println!("outer::{}", n);
+
+        for n in idx..v.len() {
+            if v[idx] + v[n] == 2020 {
+                println!("inner2::{}, {}", v[idx], v[n]);
+                println!("product2::{}", v[idx] * v[n]);
+            }
+
+            for p in n..v.len() {
+                if v[idx] + v[n] + v[p] == 2020 {
+                    println!("inner3::{}, {}, {}", v[idx], v[n], v[p]);
+                    println!("product3::{}", v[idx] * v[n] * v[p]);
+                }
+            }
+        }
+
+
     }
 
     // Ok(())
