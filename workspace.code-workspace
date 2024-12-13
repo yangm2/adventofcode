@@ -6,7 +6,8 @@
 	],
 	"settings": {
 		"rust-analyzer.linkedProjects": [
-			"2020/day1/Cargo.toml"
+			"2020/day1/Cargo.toml",
+			"2024/Cargo.toml"
 		]
 	}
 }

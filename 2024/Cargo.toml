@@ -1,0 +1,12 @@
+[workspace]
+members = ["day*"]
+resolver = "2"
+
+[workspace.package]
+authors = ["yangm2 <yangm2@users.noreply.github.com>"]
+documentation = "https://adventofcode.com/2024"
+edition = "2024"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
