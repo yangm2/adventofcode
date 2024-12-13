@@ -1,8 +1,7 @@
-use std::error::Error;
 use anyhow::Result;
+use std::error::Error;
 
-fn part1(ary: [ [ Option<u32>; 1000]; 2] ) -> Result<u32> {
-
+fn part1(ary: [[Option<u32>; 1000]; 2]) -> Result<u32> {
     // compute the sum of the absolute difference between each pair
     let mut total_distance: u32 = 0;
     for (row, item) in ary[0].iter().enumerate() {
@@ -16,13 +15,12 @@ fn part1(ary: [ [ Option<u32>; 1000]; 2] ) -> Result<u32> {
     Ok(total_distance)
 }
 
-fn part2(ary: [ [ Option<u32>; 1000]; 2] ) -> Result<u32> {
-
+fn part2(ary: [[Option<u32>; 1000]; 2]) -> Result<u32> {
     assert!(ary[1].is_sorted());
 
     // compute the sum of the absolute difference between each pair
     let mut similarity_sum: u32 = 0;
-    for (row, item) in ary[0].iter().enumerate() {
+    for item in ary[0].iter() {
         let left_val = item.unwrap();
 
         // brute-force: count instances of left_val in ary[1]
@@ -47,17 +45,16 @@ fn part2(ary: [ [ Option<u32>; 1000]; 2] ) -> Result<u32> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-
     // compile input file into binary
     const INPUT_TXT: &str = include_str!("../input.txt");
 
     // declare 2D array to hold data
     const COLS: usize = 2;
-    const ROWS: usize = 1000;  // FIXME: INPUT_TXT.lines().len() is not `const`
-    let mut list: [ [ Option<u32>; ROWS]; COLS] = [[None; ROWS]; COLS];
+    const ROWS: usize = 1000; // FIXME: INPUT_TXT.lines().len() is not `const`
+    let mut list: [[Option<u32>; ROWS]; COLS] = [[None; ROWS]; COLS];
 
     // parse data and store in array
-    for (row, l)  in INPUT_TXT.lines().enumerate() {
+    for (row, l) in INPUT_TXT.lines().enumerate() {
         for (col, v) in l.split_ascii_whitespace().enumerate() {
             list[col][row] = Some(v.parse().unwrap());
         }
@@ -75,5 +72,4 @@ fn main() -> Result<(), Box<dyn Error>> {
     print!("Part 2 - total similarity: {part2_total_similarity}\n");
 
     Ok(())
-
 }
