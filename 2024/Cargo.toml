@@ -10,3 +10,6 @@ publish = false
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+[workspace.dependencies]
+anyhow = "1.0"
