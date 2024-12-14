@@ -1,6 +1,8 @@
 use anyhow::Result;
 use std::{cmp::Ordering, error::Error};
 
+#[doc = include_str!("../README.md")]
+
 fn part1(levels: Vec<u8>) -> Result<bool> {
     // check for sorted or reverse sorted
     if levels.is_sorted() || levels.is_sorted_by(|a, b| a.cmp(b) == Ordering::Greater) {

@@ -1,6 +1,8 @@
 use anyhow::Result;
 use std::error::Error;
 
+#[doc = include_str!("../README.md")]
+
 fn part1(ary: [[Option<u32>; 1000]; 2]) -> Result<u32> {
     // compute the sum of the absolute difference between each pair
     let mut total_distance: u32 = 0;
