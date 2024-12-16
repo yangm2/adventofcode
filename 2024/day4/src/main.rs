@@ -127,16 +127,13 @@ fn search_for_x_mas<const IN_ROWS: usize, const IN_COLS: usize>(
 ) -> Result<usize> {
     let mut count = 0;
 
-    // . M .
-    // M A S  => r".M.MAS.S."
-    // . S .
-
+    // only X-patterns, not t-patterns!!!
     // M . M
     // . A .  => r"M.M.A.S.S"
     // S . S
 
     let re = Regex::new(
-        r".M.MAS.S.|.S.MAS.M.|.S.SAM.M.|.M.SAM.S.|M.M.A.S.S|S.M.A.S.M|S.S.A.M.M|M.S.A.M.S",
+        r"M.M.A.S.S|S.M.A.S.M|S.S.A.M.M|M.S.A.M.S",
     )
     .unwrap();
 
