@@ -132,10 +132,7 @@ fn search_for_x_mas<const IN_ROWS: usize, const IN_COLS: usize>(
     // . A .  => r"M.M.A.S.S"
     // S . S
 
-    let re = Regex::new(
-        r"M.M.A.S.S|S.M.A.S.M|S.S.A.M.M|M.S.A.M.S",
-    )
-    .unwrap();
+    let re = Regex::new(r"M.M.A.S.S|S.M.A.S.M|S.S.A.M.M|M.S.A.M.S").unwrap();
 
     for block in ary.as_flattened() {
         assert!(block[0][0] != '.');
