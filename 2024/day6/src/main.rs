@@ -84,7 +84,6 @@ impl<const ROWS: usize, const COLS: usize> Iterator for &mut Map<ROWS, COLS> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -112,13 +111,18 @@ mod tests {
         let mut m = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(input_txt);
 
         let step1 = m.into_iter().next().unwrap();
-        assert_eq!(Guard::new(5,5,Orientation::Up), step1.guard);
+        assert_eq!(Guard::new(5, 5, Orientation::Up), step1.guard);
 
         for nstep in &mut m {
             dbg!(nstep.guard);
         }
 
-        let distinct_positions_visited = m.grid.as_flattened().iter().filter(|p| p.visited > 0).count();
+        let distinct_positions_visited = m
+            .grid
+            .as_flattened()
+            .iter()
+            .filter(|p| p.visited > 0)
+            .count();
 
         assert!(ARY_ROWS_COLS * ARY_ROWS_COLS > distinct_positions_visited);
         assert_eq!(FINAL_ANSWER, distinct_positions_visited);

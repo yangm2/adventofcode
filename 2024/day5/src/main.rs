@@ -207,7 +207,6 @@ fn fix_updates(_page_ordering_rules: &Rules, update_pages: &mut Updates) -> Resu
 
         // applying the rules multiple times seems to be necessary, but eventually seems to converge
         for tt in 1..=attempt.len() {
-
             // Reddit hints suggested that the given rules (that are relevant) won't create cycles and produces a deterministic order
             // use "swapping" to apply given rule
             for rule in update.relevant_rules.as_ref().unwrap() {
