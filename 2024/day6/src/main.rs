@@ -1,5 +1,3 @@
-#[doc = include_str!("../README.md")]
-
 use anyhow::Result;
 use std::error::Error;
 
@@ -246,6 +244,7 @@ mod tests {
     }
 }
 
+#[doc = include_str!("../README.md")]
 fn main() -> Result<(), Box<dyn Error>> {
     // compile input file into binary
     const INPUT_TXT: &str = include_str!("../input.txt");
