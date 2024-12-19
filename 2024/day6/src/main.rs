@@ -1,9 +1,11 @@
+#[doc = include_str!("../README.md")]
+
 use anyhow::Result;
 use std::error::Error;
 
-#[doc = include_str!("../README.md")]
+/// direction that the guard is facing
 #[derive(Clone, Debug, PartialEq)]
-enum Orientation {
+pub enum Orientation {
     Up,
     Right,
     Down,
@@ -13,6 +15,7 @@ enum Orientation {
 impl Iterator for Orientation {
     type Item = Orientation;
 
+    /// enums don't have a built-in iterator (for algebraic type theory reasons)
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Orientation::Up => Some(Self::Item::Right),
@@ -24,7 +27,7 @@ impl Iterator for Orientation {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Guard {
+pub struct Guard {
     orientation: Orientation,
     row: usize,
     col: usize,
@@ -39,12 +42,13 @@ impl Guard {
     }
 }
 
+/// Metadata and State of a position (within the grid)
 #[derive(Clone, Copy, Debug)]
-struct Position {
+struct PositionMetadataState {
     obstruction: bool,
     visited: u32,
 }
-impl Position {
+impl PositionMetadataState {
     fn new(obs: bool) -> Self {
         Self {
             obstruction: obs,
@@ -53,15 +57,19 @@ impl Position {
     }
 }
 
+/// Not to be confused with the generic std::Map datastructure, naming is hard 😭
 #[derive(Clone, Debug)]
-struct Map<const ROWS: usize, const COLS: usize> {
-    grid: [[Position; COLS]; ROWS],
+pub struct Map<const ROWS: usize, const COLS: usize> {
+    /// coordinate grid, with metadata and state about each position
+    grid: [[PositionMetadataState; COLS]; ROWS],
+    /// state to track the guard
     guard: Guard,
 }
 impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
-    fn from_str(input_txt: &str) -> Self {
+    /// general constructor
+    pub fn from_str(input_txt: &str) -> Self {
         let mut g: Option<Guard> = None;
-        let mut result: [[Option<Position>; COLS]; ROWS] = [[None; COLS]; ROWS];
+        let mut result: [[Option<PositionMetadataState>; COLS]; ROWS] = [[None; COLS]; ROWS];
 
         for (rr, row) in input_txt.lines().enumerate() {
             for (cc, col) in row.chars().enumerate() {
@@ -69,7 +77,7 @@ impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
                 if col == '^' {
                     g = Some(Guard::new(rr, cc, Orientation::Up));
                 }
-                result[rr][cc] = Some(Position::new(obs));
+                result[rr][cc] = Some(PositionMetadataState::new(obs));
             }
         }
 
@@ -79,6 +87,7 @@ impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
         }
     }
 
+    /// return (row, col) in the Map of whatever is "in front" of the guard
     fn coord_in_front_of_guard(&self) -> Option<(usize, usize)> {
         match self.guard.orientation {
             Orientation::Up => {
@@ -120,7 +129,8 @@ impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
         }
     }
 
-    fn count_positions_visited(&self) -> usize {
+    /// didn't really need a count of times visited, so this just reduces the count
+    pub fn count_positions_visited(&self) -> usize {
         self.grid
             .as_flattened()
             .iter()
@@ -132,6 +142,7 @@ impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
 impl<const ROWS: usize, const COLS: usize> Iterator for &mut Map<ROWS, COLS> {
     type Item = Guard;
 
+    /// next action for the guard: step, turn or done
     fn next(&mut self) -> Option<Self::Item> {
         match self.coord_in_front_of_guard() {
             Some((r, c)) => {
@@ -242,6 +253,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut map = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(INPUT_TXT);
 
+    // walk the guard through the map
     for step in &mut map {
         dbg!(step);
     }
