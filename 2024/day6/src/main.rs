@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::error::Error;
+use std::{error::Error};
 
 /// direction that the guard is facing
 #[derive(Clone, Debug, PartialEq)]
@@ -135,6 +135,13 @@ impl<const ROWS: usize, const COLS: usize> Map<ROWS, COLS> {
             .filter(|p| p.visited > 0)
             .count()
     }
+
+    fn iter_visited<'a>(&'a self) -> impl Iterator<Item = (usize, usize)> + 'a {
+        VisitedMapIter::<'a, ROWS, COLS> {
+            map: self,
+            next_state: None,
+        }
+    }
 }
 
 impl<const ROWS: usize, const COLS: usize> Iterator for &mut Map<ROWS, COLS> {
@@ -155,6 +162,55 @@ impl<const ROWS: usize, const COLS: usize> Iterator for &mut Map<ROWS, COLS> {
             }
             None => None,
         }
+    }
+}
+
+/// State for iterating over visited coords in Map
+#[derive(Clone)]
+struct VisitedMapIter<'a, const ROWS: usize, const COLS: usize> {
+    map: &'a Map<ROWS, COLS>,
+    /// bookkeeping for iterator
+    next_state: Option<(usize, usize)>,
+}
+
+impl<'a, const ROWS: usize, const COLS: usize> Iterator for VisitedMapIter<'a, ROWS, COLS> {
+    type Item = (usize, usize);
+
+    /// return next visited coord
+    fn next(&mut self) -> Option<Self::Item> {
+        // helper function
+        fn inc<const ROWS: usize, const COLS: usize>(r: usize, c: usize) -> Option<(usize, usize)> {
+            if c < COLS - 1 {
+                Some((r, c + 1))
+            } else if r < ROWS - 1 {
+                Some((r + 1, 0))
+            } else {
+                None
+            }
+        }
+
+        let (start_r, mut start_c) = if self.next_state.is_none() {
+            (0, 0)
+        } else {
+            self.next_state.unwrap()
+        };
+
+        // search for next visited
+        for row in start_r..ROWS {
+            for col in start_c..COLS {
+                if self.map.grid[row][col].visited > 0 {
+                    self.next_state = inc::<ROWS, COLS>(row, col);
+                    // dbg!(Some((row, col)));
+                    return Some((row, col));
+                }
+                self.next_state = inc::<ROWS, COLS>(row, col);
+                // dbg!(row, col);
+            }
+            start_c = 0;
+        }
+
+        // didn't find any visited positions
+        None
     }
 }
 
@@ -240,6 +296,66 @@ mod tests {
         distinct_positions_visited = m.count_positions_visited();
 
         assert!(ARY_ROWS_COLS * ARY_ROWS_COLS > distinct_positions_visited);
+        assert_eq!(FINAL_ANSWER, distinct_positions_visited);
+    }
+
+    #[test]
+    fn test_2() {
+        const PARTIAL_ANSWER: usize = 41;
+        const FINAL_ANSWER: usize = 6;
+
+        const ARY_ROWS_COLS: usize = 10;
+        let tmp: String = String::from(
+            //123456789
+            "....#.....\n\
+             .........#\n\
+             ..........\n\
+             ..#.......\n\
+             .......#..\n\
+             ..........\n\
+             .#..^.....\n\
+             ........#.\n\
+             #.........\n\
+             ......#...",
+        );
+        let input_txt = tmp.as_str();
+
+        let mut m = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(input_txt);
+
+        // keep going
+        for nstep in &mut m {
+            dbg!(nstep);
+        }
+
+        let distinct_positions_visited = m.count_positions_visited();
+
+        assert!(ARY_ROWS_COLS * ARY_ROWS_COLS > distinct_positions_visited);
+        assert_eq!(PARTIAL_ANSWER, distinct_positions_visited);
+
+        // test iterating over visited coords
+        let cm = m.clone();
+
+        let mut iter = cm.iter_visited();
+        assert_eq!((1, 4), iter.next().unwrap());
+        assert_eq!((1, 5), iter.next().unwrap());
+        assert_eq!((1, 6), iter.next().unwrap());
+        assert_eq!((1, 7), iter.next().unwrap());
+        assert_eq!((1, 8), iter.next().unwrap());
+        assert_eq!((2, 4), iter.next().unwrap());
+
+        let distinct_positions_visited = cm.count_positions_visited();
+        assert_eq!(distinct_positions_visited, cm.iter_visited().count());
+
+        for coord in m.clone().iter_visited() {
+            dbg!(coord);
+
+            // on tmp Map:
+            //   change coord to be an obstruction
+            //   check if guard loops
+            todo!();
+
+        }
+
         assert_eq!(FINAL_ANSWER, distinct_positions_visited);
     }
 }
