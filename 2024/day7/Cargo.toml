@@ -9,6 +9,10 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 itertools = "0.13.0"
+memoize = "0.4.2"
 
 [lints]
 workspace = true
+
+[profile.release]
+debug = true

@@ -1,19 +1,42 @@
 use anyhow::Result;
 use itertools::Itertools;
-use std::error::Error;
+use std::{error::Error, fmt::Debug};
+use memoize::memoize;
 
 /// missing operators allowed in the equation
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
 enum Operator {
     Add,
     Multiply,
+    Concatenate,
+}
+
+#[inline(always)]
+#[memoize]
+fn memoized_mul(lhs: u64, rhs: u64) -> u64 {
+    lhs.checked_mul(rhs).unwrap()
+}
+
+#[inline]
+#[memoize]
+fn concat_u64(lhs: u64, rhs: u64) -> u64 {
+    format!("{lhs}{rhs}").parse::<u64>().unwrap()
+}
+
+/// Ugly memoization function to memoize the permutations with replacement; not lazy
+#[inline]
+#[memoize]
+fn memoize_permutations_with_replacment(operator_set: Vec<Operator>, oplen: usize) -> Vec<Vec<Operator>> {
+    itertools::repeat_n(operator_set, oplen).multi_cartesian_product().collect()
 }
 
 impl Operator {
+    // FIXME: learn how to manually memoize this method
     fn apply(&self, lhs: u64, rhs: u64) -> u64 {
         match self {
             Self::Add => lhs + rhs,
-            Self::Multiply => lhs.checked_mul(rhs).unwrap(),
+            Self::Multiply => memoized_mul(lhs, rhs),
+            Self::Concatenate => concat_u64(lhs, rhs),
         }
     }
 }
@@ -68,30 +91,29 @@ impl EquationSolver {
             return None;
         }
 
-        println!(
-            "    {} {:?} {} = {}",
-            val.unwrap(),
-            tail_operator,
-            tail_operand,
-            result
-        );
+        // println!(
+        //     "    {} {:?} {} = {}",
+        //     val.unwrap(),
+        //     tail_operator,
+        //     tail_operand,
+        //     result
+        // );
         Some(result)
     }
 
     /// finds the operators (if any) for the equation
-    fn solve(&self) -> Result<()> {
+    fn solve(&self, operator_set: Vec<Operator>) -> Result<()> {
         let oplen = self.eqn.rhs.len() - 1;
         // dbg!(oplen);
 
         // generate all possible permutations (with replacement!!!) of the operators
-        let ordered_combos = itertools::repeat_n([Operator::Add, Operator::Multiply], oplen)
-            .multi_cartesian_product();
+        let ordered_combos = memoize_permutations_with_replacment(operator_set, oplen);
 
-        println!(
-            "Looking for {:?} from {} combos",
-            &self.eqn,
-            ordered_combos.clone().count()
-        );
+        // println!(
+        //     "Looking for {:?} from {} combos",
+        //     &self.eqn,
+        //     ordered_combos.clone().count()
+        // );
 
         for combo in ordered_combos {
             // dbg!(&combo);
@@ -164,7 +186,48 @@ mod tests {
             let solver = EquationSolver::new(eqn.clone());
             // dbg!(&solver);
 
-            if solver.solve().is_ok() {
+            if solver
+                .solve(vec![Operator::Add, Operator::Multiply])
+                .is_ok()
+            {
+                count_possibly_true_equations += eqn.lhs;
+            }
+        }
+
+        assert_eq!(FINAL_ANSWER, count_possibly_true_equations as usize);
+    }
+
+    #[test]
+    fn test_2() {
+        const FINAL_ANSWER: usize = 11387;
+
+        let tmp: String = String::from(
+            "190: 10 19\n\
+             3267: 81 40 27\n\
+             83: 17 5\n\
+             156: 15 6\n\
+             7290: 6 8 6 15\n\
+             161011: 16 10 13\n\
+             192: 17 8 14\n\
+             21037: 9 7 18 13\n\
+             292: 11 6 16 20",
+        );
+        let input_txt = tmp.as_str();
+        let eqns = Equations::from_str(input_txt);
+
+        let mut count_possibly_true_equations = 0;
+        for eqn in eqns.0 {
+            let solver = EquationSolver::new(eqn.clone());
+            // dbg!(&solver);
+
+            if solver
+                .solve(vec![
+                    Operator::Add,
+                    Operator::Multiply,
+                    Operator::Concatenate,
+                ])
+                .is_ok()
+            {
                 count_possibly_true_equations += eqn.lhs;
             }
         }
@@ -180,21 +243,44 @@ fn main() -> Result<(), Box<dyn Error>> {
     let eqns = Equations::from_str(INPUT_TXT);
 
     let mut part1_total_calibration_result = 0;
+    let mut unsolved_eqns = Vec::<Equation>::new();
     for eqn in eqns.0 {
         let solver = EquationSolver::new(eqn.clone());
         // dbg!(&solver);
 
-        let solve = solver.solve();
+        let solve = solver.solve(vec![Operator::Add, Operator::Multiply]);
         if solve.is_ok() {
             part1_total_calibration_result += eqn.lhs;
+        } else {
+            unsolved_eqns.push(eqn);
+        }
+    }
+
+    println!(
+        "Part 1 Count of possibly true equations: {}",
+        part1_total_calibration_result
+    );
+
+    let mut part2_total_calibration_result = part1_total_calibration_result;
+    for eqn in unsolved_eqns {
+        let solver = EquationSolver::new(eqn.clone());
+        // dbg!(&solver);
+
+        let solve = solver.solve(vec![
+            Operator::Add,
+            Operator::Multiply,
+            Operator::Concatenate,
+        ]);
+        if solve.is_ok() {
+            part2_total_calibration_result += eqn.lhs;
         } else {
             // dbg!(solve, eqn);
         }
     }
 
     println!(
-        "Count of possibly true equations: {}",
-        part1_total_calibration_result
+        "Part2 Count of possibly true equations: {}",
+        part2_total_calibration_result
     );
 
     Ok(())
