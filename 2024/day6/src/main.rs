@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{error::Error};
+use std::error::Error;
 
 /// direction that the guard is facing
 #[derive(Clone, Debug, PartialEq)]
@@ -302,7 +302,6 @@ mod tests {
     #[test]
     fn test_2() {
         const PARTIAL_ANSWER: usize = 41;
-        const FINAL_ANSWER: usize = 6;
 
         const ARY_ROWS_COLS: usize = 10;
         let tmp: String = String::from(
@@ -322,9 +321,9 @@ mod tests {
 
         let mut m = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(input_txt);
 
-        // keep going
-        for nstep in &mut m {
-            dbg!(nstep);
+        // update m with patrol coverage
+        for _nstep in &mut m {
+            // dbg!(nstep);
         }
 
         let distinct_positions_visited = m.count_positions_visited();
@@ -345,18 +344,161 @@ mod tests {
 
         let distinct_positions_visited = cm.count_positions_visited();
         assert_eq!(distinct_positions_visited, cm.iter_visited().count());
+    }
 
-        for coord in m.clone().iter_visited() {
+    #[test]
+    fn test_3() {
+        const PARTIAL_ANSWER: usize = 41;
+        const FINAL_ANSWER: usize = 1;
+
+        const ARY_ROWS_COLS: usize = 10;
+        let tmp: String = String::from(
+            //123456789
+            "....#.....\n\
+             .........#\n\
+             ..........\n\
+             ..#.......\n\
+             .......#..\n\
+             ..........\n\
+             .#..^.....\n\
+             ........#.\n\
+             #.........\n\
+             ......#...",
+        );
+        let input_txt = tmp.as_str();
+
+        let mut m = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(input_txt);
+
+        let map_start = m.clone();
+
+        // update m with patrol coverage
+        for _nstep in &mut m {
+            // dbg!(nstep);
+        }
+
+        let distinct_positions_visited = m.count_positions_visited();
+
+        assert!(ARY_ROWS_COLS * ARY_ROWS_COLS > distinct_positions_visited);
+        assert_eq!(PARTIAL_ANSWER, distinct_positions_visited);
+
+        let mut count_infinite_loops = 0;
+        let coord = (6, 3);
+
+        dbg!(coord);
+
+        // on tmp Map:
+        //   change coord to be an obstruction
+        //   check if guard loops
+
+        let mut sim = map_start.clone();
+        sim.grid[coord.0][coord.1].obstruction = true;
+
+        dbg! {&sim.guard};
+
+        for guard_step in &mut sim {
+            println!("{:?}", &guard_step);
+
+            if map_start.guard == guard_step {
+                count_infinite_loops += 1;
+                println!(
+                    " -- FOUND infinite loop with obstruction at [{}][{}]",
+                    coord.0, coord.1
+                );
+                break;
+            }
+        }
+
+        dbg!(sim.grid[coord.0][coord.1]);
+        println!(
+            " -- NO infinite loop with obstruction at [{}][{}]",
+            coord.0, coord.1
+        );
+
+        assert_eq!(FINAL_ANSWER, count_infinite_loops);
+    }
+
+    #[test]
+    fn test_4() {
+        const PARTIAL_ANSWER: usize = 41;
+        const FINAL_ANSWER: usize = 6;
+
+        const ARY_ROWS_COLS: usize = 10;
+        let tmp: String = String::from(
+            //123456789
+            "....#.....\n\
+             .........#\n\
+             ..........\n\
+             ..#.......\n\
+             .......#..\n\
+             ..........\n\
+             .#..^.....\n\
+             ........#.\n\
+             #.........\n\
+             ......#...",
+        );
+        let input_txt = tmp.as_str();
+
+        let map_unvisited = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(input_txt);
+
+        let mut map_visited = map_unvisited.clone();
+
+        // update m with patrol coverage
+        for _nstep in &mut map_visited {
+            // dbg!(nstep);
+        }
+
+        let distinct_positions_visited = map_visited.count_positions_visited();
+
+        assert!(ARY_ROWS_COLS * ARY_ROWS_COLS > distinct_positions_visited);
+        assert_eq!(PARTIAL_ANSWER, distinct_positions_visited);
+
+        let mut count_infinite_loops = 0;
+        for coord in map_visited
+            .clone()
+            .iter_visited()
+            .filter(|uu| (uu.0, uu.1) != (map_unvisited.guard.row, map_unvisited.guard.col))
+        {
             dbg!(coord);
 
             // on tmp Map:
             //   change coord to be an obstruction
             //   check if guard loops
-            todo!();
 
+            let mut sim = map_unvisited.clone();
+            sim.grid[coord.0][coord.1].obstruction = true;
+
+            // record start position (optional) and turns
+            // NOTE: some infinite loops are a subset of the whole path; so they may not return to start position
+            // FIXME: this should be stored in the iterator struct and return something like Err<InfiniteLoop>
+            let mut previous_steps = Vec::<Guard>::new();
+            // previous_steps.push(sim.guard.clone()); // optimization ... some infnite loops return to start position
+            let mut prev_orientation: Orientation = sim.guard.orientation.clone();
+
+            for guard_step in &mut sim {
+                // retracing turn-step indicates that the guard is in a loop
+                if previous_steps.contains(&guard_step) {
+                    count_infinite_loops += 1;
+                    println!(
+                        " -- FOUND infinite loop with obstruction at [{}][{}]",
+                        coord.0, coord.1
+                    );
+                    break;
+                } else {
+                    // optimization ... only record turns intead of every step
+                    if prev_orientation != guard_step.orientation {
+                        prev_orientation = guard_step.orientation.clone();
+                        previous_steps.push(guard_step);
+                    }
+                }
+            }
+
+            println!(
+                " -- NO infinite loop with obstruction at [{}][{}]",
+                coord.0, coord.1
+            )
         }
 
-        assert_eq!(FINAL_ANSWER, distinct_positions_visited);
+        assert_eq!(FINAL_ANSWER, count_infinite_loops);
     }
 }
 
@@ -366,15 +508,64 @@ fn main() -> Result<(), Box<dyn Error>> {
     const INPUT_TXT: &str = include_str!("../input.txt");
     const ARY_ROWS_COLS: usize = 130;
 
-    let mut map = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(INPUT_TXT);
+    let map_unvisited = Map::<ARY_ROWS_COLS, ARY_ROWS_COLS>::from_str(INPUT_TXT);
 
+    let mut map_visited = map_unvisited.clone();
     // walk the guard through the map
-    for step in &mut map {
-        dbg!(step);
+    for _step in &mut map_visited {
+        // dbg!(step);
     }
 
-    let part1_distinct_positions_visited = map.count_positions_visited();
+    let part1_distinct_positions_visited = map_visited.count_positions_visited();
     println!("part 1 distinct_positions_visited = {part1_distinct_positions_visited}");
+
+    let mut part2_count_infinite_loops = Vec::<(usize, usize)>::new();
+    // NOTE: cannot put obstruction at the Guard's starting point!!!
+    for coord in map_visited
+        .clone()
+        .iter_visited()
+        .filter(|uu| (uu.0, uu.1) != (map_unvisited.guard.row, map_unvisited.guard.col))
+    {
+        // dbg!(coord);
+
+        // on tmp Map:
+        //   change coord to be an obstruction
+        //   check if guard loops
+
+        let mut sim = map_unvisited.clone();
+        sim.grid[coord.0][coord.1].obstruction = true;
+
+        // record start position (optional) and turns
+        // NOTE: some infinite loops are a subset of the whole path; so they may not return to start position
+        // FIXME: this should be stored in the iterator struct and return something like Err<InfiniteLoop>
+        let mut previous_steps = Vec::<Guard>::new();
+        previous_steps.push(sim.guard.clone()); // optimization ... some infnite loops return to start position
+
+        for guard_step in &mut sim {
+            // retracing turn-step indicates that the guard is in a loop
+            if previous_steps.contains(&guard_step) {
+                part2_count_infinite_loops.push(coord);
+                // println!(
+                //     " -- FOUND infinite loop with obstruction at [{}][{}]",
+                //     coord.0, coord.1
+                // );
+                break;
+            } else {
+                // optimization ... only record turns intead of every step
+                if previous_steps.last().unwrap().orientation != guard_step.orientation {
+                    // prev_orientation = guard_step.orientation.clone();
+                    previous_steps.push(guard_step);
+                }
+            }
+        }
+    }
+
+    // < 1656
+    // > 931
+    println!(
+        "part 2 count infinite loops from 1 new obstruction: {}",
+        part2_count_infinite_loops.iter().count()
+    );
 
     Ok(())
 }
